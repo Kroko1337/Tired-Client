@@ -1,6 +1,7 @@
 package beta.tiredb56.module.impl.list.misc;
 
 import beta.tiredb56.api.annotations.ModuleAnnotation;
+import beta.tiredb56.api.logger.impl.IngameChatLog;
 import beta.tiredb56.api.util.TimerUtil;
 import beta.tiredb56.event.EventTarget;
 import beta.tiredb56.event.events.EventPreMotion;
@@ -23,6 +24,7 @@ public class VerusScaffoldDisabler extends Module {
     private final LinkedList<Packet<?>> packets = new LinkedList<>();
     private boolean wantTeleport;
     private final TimerUtil timerUtil = new TimerUtil();
+    private LinkedList<Packet> transactions = new LinkedList<>();
 
     @EventTarget
     public void onPacket(PacketEvent event) {
@@ -30,6 +32,7 @@ public class VerusScaffoldDisabler extends Module {
         if (event.getPacket() instanceof C0FPacketConfirmTransaction) {
 
             packets.add(event.getPacket());
+            transactions.add(event.getPacket());
             event.setCancelled(true);
 
             if (packets.size() > 300)
@@ -67,6 +70,15 @@ public class VerusScaffoldDisabler extends Module {
 
     @EventTarget
     public void onUpdate(UpdateEvent e) {
+        if (MC.thePlayer.ticksExisted % 180 == 0) {
+            IngameChatLog.INGAME_CHAT_LOG.doLog(transactions.size() + "");
+
+            if (transactions.size() > 20) {
+                for (int i = 0; i < transactions.size(); i++) {
+                    sendPacketUnlogged(transactions.poll());
+                }
+            }
+        }
         if (timerUtil.reachedTime(490L)) {
             timerUtil.doReset();
 
@@ -83,6 +95,7 @@ public class VerusScaffoldDisabler extends Module {
 
     @Override
     public void onState() {
+        transactions.clear();
         this.wantTeleport = false;
         packets.clear();
         this.timerUtil.doReset();

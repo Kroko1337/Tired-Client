@@ -2,9 +2,8 @@ package beta.tiredb56.tired;
 
 import beta.tiredb56.api.util.StencilUtil;
 import beta.tiredb56.interfaces.IHook;
-import beta.tiredb56.shader.list.ArrayListShader;
 import beta.tiredb56.shader.list.BackGroundShader;
-import net.minecraft.client.Minecraft;
+import beta.tiredb56.shader.list.DropShadow;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -14,6 +13,17 @@ public class ShaderRenderer implements IHook {
 
     public ShaderRenderer() {
         backGroundShader = new BackGroundShader(0);
+    }
+
+    private static DropShadow dropShadow = new DropShadow(4);
+
+    public static void startDropShadow() {
+        dropShadow.render();
+    }
+
+    public static void stopDropShadow() {
+        dropShadow.deleteShader();
+
     }
 
     public static void renderBG() {

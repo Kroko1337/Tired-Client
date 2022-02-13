@@ -1,7 +1,7 @@
 package beta.tiredb56.api.util.rotation;
 
+
 import beta.tiredb56.api.util.MathUtil;
-import beta.tiredb56.api.util.Rotations;
 import beta.tiredb56.interfaces.IHook;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.AxisAlignedBB;
@@ -15,6 +15,7 @@ import java.io.IOException;
 
 public class RotationSender implements IHook {
 
+    private static double heuristicsX, heuristicsY, heuristicsZ;
 
     public static float[] doGCD(float yaw, float pitch, float[] prevRots) {
         final float yawDifference = yaw - prevRots[0], pitchDifference = pitch - prevRots[1];
@@ -30,23 +31,12 @@ public class RotationSender implements IHook {
         return new float[]{currentYaw, currentPitch};
     }
 
-    public static float[] getRotationFromPosition(double x, double y, double z) {
-        final double xDiff = x - MC.thePlayer.posX;
-        final double zDiff = z - MC.thePlayer.posZ;
-        final double yDiff = y - MC.thePlayer.posY - (double) MC.thePlayer.getEyeHeight();
-        final double dist = MathHelper.sqrt_double(xDiff * xDiff + zDiff * zDiff);
-        final float yaw = (float) (Math.atan2(zDiff, xDiff) * 180.0 / Math.PI) - 90.0f;
-        final float pitch = (float) (-Math.atan2(yDiff, dist) * 180.0 / Math.PI);
-        return new float[]{yaw, pitch};
-    }
-
-
-    public static float[] getEntityRotations(final Entity entity, final float[] prevRotations, int randomFactor, boolean predict, boolean bestVec) {
+    public static float[] getEntityRotations(final Entity entity, boolean predict, boolean bestVec, boolean heuristics) {
 
 
         double x, y, z;
 
-        if (!bestVec) {
+        if (!bestVec || heuristics) {
             x = entity.posX;
             y = entity.posY + entity.getEyeHeight();
             z = entity.posZ;
@@ -56,6 +46,28 @@ public class RotationSender implements IHook {
             y = bestVecValue.yCoord;
             z = bestVecValue.zCoord;
         }
+
+        final double minX = entity.boundingBox.minX - entity.posX;
+        final double maxX = entity.boundingBox.maxX - entity.posX;
+        final double minY = entity.boundingBox.minY - entity.posY;
+        final double maxY = entity.boundingBox.maxY - entity.posY;
+        final double minZ = entity.boundingBox.minZ - entity.posZ;
+        final double maxZ = entity.boundingBox.maxZ - entity.posZ;
+
+        if (heuristics) {
+
+            heuristicsX = getRandomSin(minX, maxX, 400.0D) + Math.random() / 350.0D;
+            heuristicsY = getRandomSin(minY, maxY, 900.0D) + Math.random() / 350.0D - 1.4;
+            heuristicsZ = getRandomSin(minZ, maxZ, 300.0D) + Math.random() / 350.0D ;
+        } else {
+            heuristicsX = 0;
+            heuristicsY = 0;
+            heuristicsZ = 0;
+        }
+
+        x += heuristicsX;
+        y += heuristicsY;
+        z += heuristicsZ;
 
 
         if (predict) {
@@ -88,15 +100,20 @@ public class RotationSender implements IHook {
         float pitch = (float) (-Math.atan2(yDiff, dist) * 180.0 / Math.PI);
 
 
-        if (MC.gameSettings.keyBindSneak.pressed || MC.gameSettings.keyBindJump.pressed || MC.gameSettings.keyBindBack.pressed || MC.gameSettings.keyBindRight.pressed || MC.gameSettings.keyBindLeft.pressed) {
-            yaw += MathHelper.clamp_float((float) MathUtil.getRandom(1, Rotations.yawDifference), 0, 9);
-            pitch += MathHelper.clamp_float((float) MathUtil.getRandom(1, Rotations.pitchDifference), 0, 9);
-        }
-
         pitch = MathHelper.clamp_float(pitch, -90, 90);
 
         return doGCD(yaw, pitch, new float[]{yaw, pitch});
     }
+
+    public static double getRandomSin(double min, double max, double timeFactor) {
+        double random = Math.sin((double)System.currentTimeMillis() / timeFactor) * (max - min);
+        if (random < 0.0D) {
+            random = Math.abs(random);
+        }
+
+        return random + min;
+    }
+
 
     public static Vec3 vec(Vec3 look, AxisAlignedBB axisAlignedBB) {
         return new Vec3(MathHelper.clamp_double(look.xCoord, axisAlignedBB.minX, axisAlignedBB.maxX), MathHelper.clamp_double(look.yCoord, axisAlignedBB.minY, axisAlignedBB.maxY), MathHelper.clamp_double(look.zCoord, axisAlignedBB.minZ, axisAlignedBB.maxZ));

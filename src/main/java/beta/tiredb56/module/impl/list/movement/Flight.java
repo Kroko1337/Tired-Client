@@ -83,13 +83,13 @@ public class Flight extends Module {
 
 
                 MC.thePlayer.motionY = motionY;
-                ClientHelper.INSTANCE.doSpeedup(1.98);
+                ClientHelper.INSTANCE.doSpeedup(1.18);
                 MC.thePlayer.motionY = 0.00000000000001F;
                 if (MC.gameSettings.keyBindSneak.isKeyDown()) {
-                    MC.thePlayer.setPosition(MC.thePlayer.posX, MC.thePlayer.posY + 1.5, MC.thePlayer.posZ);
+                    MC.thePlayer.setPosition(MC.thePlayer.posX, MC.thePlayer.posY + 2.5, MC.thePlayer.posZ);
                 }
                 if (MC.gameSettings.keyBindSprint.isKeyDown()) {
-                    MC.thePlayer.setPosition(MC.thePlayer.posX, MC.thePlayer.posY - 1.5, MC.thePlayer.posZ);
+                    MC.thePlayer.setPosition(MC.thePlayer.posX, MC.thePlayer.posY -2.5, MC.thePlayer.posZ);
                 }
             }
             break;

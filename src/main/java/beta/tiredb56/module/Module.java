@@ -52,13 +52,11 @@ public abstract class Module implements IHook {
 			if (CheatMain.INSTANCE.moduleManager.findModuleByClass(Notifications.class).isState()) {
 				NotifyManager.sendClientMessage("ModuleManager", "Toggled: " + name);
 			}
-			//TiredCore.CORE.notificationRenderer.sendNotification(NotificationRenderer.notifyType.INFORMATION, "The module " + name + " got toggled.", "Toggled Module", Color.GREEN);
 			return;
 		}
 		if (CheatMain.INSTANCE.moduleManager.findModuleByClass(Notifications.class).isState()) {
 			NotifyManager.sendClientMessage("ModuleManager", "Disabled: " + name);
 		}
-		//	TiredCore.CORE.notificationRenderer.sendNotification(NotificationRenderer.notifyType.INFORMATION, "The module " + name + " got untoggled.", "Disabled Module ", Color.RED);
 		undoEvent();
 		setState(false);
 	}

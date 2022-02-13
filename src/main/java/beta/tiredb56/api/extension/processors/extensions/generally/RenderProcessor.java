@@ -5,6 +5,7 @@ import beta.tiredb56.api.util.Translate;
 import beta.tiredb56.api.util.math.Vec;
 import beta.tiredb56.api.util.renderapi.AnimationUtil;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.block.Block;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiChat;
@@ -386,6 +387,7 @@ public class RenderProcessor extends AbstractExtension {
         GlStateManager.enableTexture2D();
         GlStateManager.disableBlend();
     }
+
 
     public boolean isInViewFrustrum(AxisAlignedBB bb) {
         Entity current = MC.getRenderViewEntity();

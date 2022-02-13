@@ -111,7 +111,7 @@ public class GuiNewChat extends Gui {
                                 int counter = 0;
 
                                 double height = PerformanceGui.usingType == UsingType.NORMAL_PERFORMANCE ? y + (float) (j2 - 2) : y + (float) (j2 - 4);
-                                FHook.fontRenderer3.drawString(s, x + (float) i2, (float) height, -1);
+                                mc.fontRendererObj.drawStringWithShadow(s, x + (float) i2, (float) height - 4, -1);
                                 GlStateManager.resetColor();
                                 GlStateManager.disableBlend(); //-- disabling blend to avoid render bugs
 

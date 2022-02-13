@@ -4,7 +4,6 @@ import beta.tiredb56.interfaces.IHook;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.renderer.texture.TextureManager;
 
-
 @UtilityClass
 public class SplashScreen implements IHook {
 

@@ -1,6 +1,8 @@
 package net.minecraft.client.multiplayer;
 
 import com.google.common.collect.Sets;
+
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -15,6 +17,7 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -345,37 +348,30 @@ public class WorldClient extends World
     /**
      * also releases skins.
      */
-    public void removeAllEntities()
-    {
+    public void removeAllEntities() {
         this.loadedEntityList.removeAll(this.unloadedEntityList);
 
-        for (int i = 0; i < this.unloadedEntityList.size(); ++i)
-        {
-            Entity entity = (Entity)this.unloadedEntityList.get(i);
+        for (int i = 0; i < this.unloadedEntityList.size(); ++i) {
+            Entity entity = (Entity) this.unloadedEntityList.get(i);
             int j = entity.chunkCoordX;
             int k = entity.chunkCoordZ;
 
-            if (entity.addedToChunk && this.isChunkLoaded(j, k, true))
-            {
+            if (entity.addedToChunk && this.isChunkLoaded(j, k, true)) {
                 this.getChunkFromChunkCoords(j, k).removeEntity(entity);
             }
         }
 
-        for (int l = 0; l < this.unloadedEntityList.size(); ++l)
-        {
-            this.onEntityRemoved((Entity)this.unloadedEntityList.get(l));
+        for (int l = 0; l < this.unloadedEntityList.size(); ++l) {
+            this.onEntityRemoved((Entity) this.unloadedEntityList.get(l));
         }
 
         this.unloadedEntityList.clear();
 
-        for (int i1 = 0; i1 < this.loadedEntityList.size(); ++i1)
-        {
-            Entity entity1 = (Entity)this.loadedEntityList.get(i1);
+        for (int i1 = 0; i1 < this.loadedEntityList.size(); ++i1) {
+            Entity entity1 = (Entity) this.loadedEntityList.get(i1);
 
-            if (entity1.ridingEntity != null)
-            {
-                if (!entity1.ridingEntity.isDead && entity1.ridingEntity.riddenByEntity == entity1)
-                {
+            if (entity1.ridingEntity != null) {
+                if (!entity1.ridingEntity.isDead && entity1.ridingEntity.riddenByEntity == entity1) {
                     continue;
                 }
 
@@ -383,13 +379,11 @@ public class WorldClient extends World
                 entity1.ridingEntity = null;
             }
 
-            if (entity1.isDead)
-            {
+            if (entity1.isDead) {
                 int j1 = entity1.chunkCoordX;
                 int k1 = entity1.chunkCoordZ;
 
-                if (entity1.addedToChunk && this.isChunkLoaded(j1, k1, true))
-                {
+                if (entity1.addedToChunk && this.isChunkLoaded(j1, k1, true)) {
                     this.getChunkFromChunkCoords(j1, k1).removeEntity(entity1);
                 }
 
@@ -398,10 +392,6 @@ public class WorldClient extends World
             }
         }
     }
-
-    /**
-     * Adds some basic stats of the world to the given crash report.
-     */
     public CrashReportCategory addWorldInfoToCrashReport(CrashReport report)
     {
         CrashReportCategory crashreportcategory = super.addWorldInfoToCrashReport(report);

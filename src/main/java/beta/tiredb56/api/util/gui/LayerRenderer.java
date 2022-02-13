@@ -5,7 +5,10 @@ import beta.tiredb56.api.util.Translate;
 import beta.tiredb56.interfaces.IHook;
 import beta.tiredb56.module.impl.HudModule;
 import beta.tiredb56.module.impl.list.combat.KillAura;
-import beta.tiredb56.module.impl.list.visual.*;
+import beta.tiredb56.module.impl.list.visual.ArrowESP;
+import beta.tiredb56.module.impl.list.visual.HotBar;
+import beta.tiredb56.module.impl.list.visual.Notifications;
+import beta.tiredb56.module.impl.list.visual.TabGui;
 import beta.tiredb56.notification.newnotifications.NotifyManager;
 import beta.tiredb56.shader.list.ArrayListShader;
 import beta.tiredb56.tired.CheatMain;
@@ -36,18 +39,21 @@ public class LayerRenderer extends ShaderRenderLayer implements IHook {
             HudModule.getInstance().renderLogo(true);
         }
 
-        ArrowESP.getInstance().renderArrow2();
+        if (ArrowESP.getInstance().state) {
+            ArrowESP.getInstance().renderArrow2();
+        }
 
-        MC.ingameGUI.renderChatFinal(false);
 
-
-        HudModule.getInstance().drawArray(true);
 
         ShaderRenderer.startBlur();
-        MC.ingameGUI.renderChatFinal(true);
+
         if (TabGui.getInstance().state) {
             TabGui.getInstance().render(true);
         }
+
+
+        MC.ingameGUI.renderChatFinal(true);
+
 
         if (CheatMain.INSTANCE.moduleManager.moduleBy(Notifications.class).isState()) {
             NotifyManager.drawNotifications(true);
@@ -61,7 +67,9 @@ public class LayerRenderer extends ShaderRenderLayer implements IHook {
             Extension.EXTENSION.getGenerallyProcessor().renderProcessor.renderHotbar(HotBar.getInstance().smooth.getValue(), true);
         }
 
-        ArrowESP.getInstance().renderArrow2();
+        if (ArrowESP.getInstance().state) {
+            ArrowESP.getInstance().renderArrow2();
+        }
         targetHUD(true);
         HudModule.getInstance().drawArrayNoText(true);
 
@@ -186,18 +194,27 @@ public class LayerRenderer extends ShaderRenderLayer implements IHook {
         } else {
             HudModule.getInstance().drawArray(true);
         }
-
-        arrayListShader.drawShader();
         if (HudModule.getInstance().colorType.getValue().equalsIgnoreCase("shader")) {
+            arrayListShader.drawShader();
             HudModule.getInstance().drawArray(false);
+
+            targetHUD2(true);
+            arrayListShader.stop();
         }
-
-
-        targetHUD2(true);
-        arrayListShader.stop();
         if (TabGui.getInstance().state) {
             TabGui.getInstance().render(true);
         }
+        ShaderRenderer.startDropShadow();
+        MC.ingameGUI.renderChatFinal(true);
+        HudModule.getInstance().drawArray(true);
+        targetHUD(true);
+        if (CheatMain.INSTANCE.moduleManager.findModuleByClass(HotBar.class).isState()) {
+            Extension.EXTENSION.getGenerallyProcessor().renderProcessor.renderHotbar(HotBar.getInstance().smooth.getValue(), true);
+        }
+        renderScoreBoard();
+        ShaderRenderer.stopDropShadow();
+
     }
+
 
 }

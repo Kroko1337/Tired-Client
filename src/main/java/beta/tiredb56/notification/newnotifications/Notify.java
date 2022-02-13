@@ -3,6 +3,7 @@ package beta.tiredb56.notification.newnotifications;
 import beta.tiredb56.api.extension.Extension;
 import beta.tiredb56.api.extension.processors.extensions.generally.RenderProcessor;
 import beta.tiredb56.api.util.TimerUtil;
+import beta.tiredb56.api.util.font.FontManager;
 import beta.tiredb56.module.impl.list.visual.ClickGUI;
 import beta.tiredb56.api.util.renderapi.AnimationUtil;
 import beta.tiredb56.interfaces.FHook;
@@ -59,7 +60,7 @@ public class Notify implements IHook {
 			Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRect(x1, y1, x2, y2,  new Color(20, 20, 20, 120).getRGB());
 		}
 
-		FHook.fontRenderer.drawString(this.title, (float) (x1) + 4, (float) (y1 + this.height / 3.5) - 3, -1);
+		FontManager.SFPRO.drawString(this.title, (float) (x1) + 4, (float) (y1 + this.height / 3.5) - 3, -1);
 		FHook.fontRenderer.drawString(this.notifyMessage, (float) (x1) + 4.0f, (float) (y1 + this.height / 3.5) + 9, -1);
 
 	}

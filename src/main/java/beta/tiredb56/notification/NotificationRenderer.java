@@ -1,6 +1,7 @@
 package beta.tiredb56.notification;
 
 import beta.tiredb56.api.extension.Extension;
+import beta.tiredb56.api.util.font.FontManager;
 import beta.tiredb56.interfaces.FHook;
 import beta.tiredb56.interfaces.IHook;
 import beta.tiredb56.api.util.Translate;
@@ -88,8 +89,8 @@ public class NotificationRenderer implements IHook {
             GL11.glTranslatef(-resolution.getScaledWidth() / 12, -resolution.getScaledHeight() / 8, 0);
 
             Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRect(notification.x - FHook.fontRenderer.getStringWidth(notification.getText()) / 2 - 3 * 7, notification.y - 3, notification.x + FHook.fontRenderer.getStringWidth(notification.getText()) / 2 + 3 * 7, notification.y * 5, Integer.MIN_VALUE);
-            FHook.fontRenderer2.drawCenteredString(notification.getText(), (float) notification.x, (float) notification.y + 7, -1);
-            FHook.fontRenderer3.drawCenteredString(desc, (float) notification.x, (float) notification.y + 1 + 22, new Color(235, 235, 235).getRGB());
+            FontManager.SFPRO.drawCenteredString(notification.getText(), (float) notification.x, (float) notification.y + 7, -1);
+            FontManager.SFPRO.drawCenteredString(desc, (float) notification.x, (float) notification.y + 1 + 22, new Color(235, 235, 235).getRGB());
             yP += 10;
             GlStateManager.popMatrix();
         }

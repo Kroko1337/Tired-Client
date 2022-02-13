@@ -243,7 +243,7 @@ public class Speed extends Module {
             }
             break;
             case "NormalBypass": {
-                double speed = 0.38;
+                double speed = 0.78;
 
                 if (!MC.thePlayer.isPotionActive(Potion.poison)) {
                     if (ClientHelper.INSTANCE.getPotionLevel() != 0) {
@@ -312,6 +312,7 @@ public class Speed extends Module {
 
                 if (MC.thePlayer.hurtTime == 0) {
 
+                    ClientHelper.INSTANCE.doSpeedup(1);
                     if (MC.thePlayer.onGround) MC.thePlayer.jump();
                     else {
                         MC.thePlayer.motionY -= 0.1F;

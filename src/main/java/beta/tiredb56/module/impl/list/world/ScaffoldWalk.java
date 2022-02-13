@@ -74,6 +74,8 @@ public class ScaffoldWalk extends Module {
 
         Rotations.scaffoldYaw = e.getYaw();
         Rotations.scaffoldPitch = e.getPitch();
+
+
     }
 
 

@@ -234,7 +234,7 @@ public class HudModule extends Module {
                                 GlStateManager.resetColor();
                                 GlStateManager.disableBlend();
                                 if (textshadow.getValue()) {
-                                    font.drawStringWithShadow2(o.getName(), (int) (sr.getScaledWidth() - borderSize - font.getStringWidth(o.getName()) - 2.0F + o.posX + 2.0F) - xD, (yAxis) - additional, texColor);
+                                    font.drawStringWithShadow2(o.getName(), (int) (sr.getScaledWidth() - borderSize - font.getStringWidth(o.getName()) - 2.0F + o.posX + 2.5) - xD, (yAxis) - additional, texColor);
                                 } else {
                                     font.drawString2(o.getName(), (int) (sr.getScaledWidth() - borderSize - font.getStringWidth(o.getName()) - 2.0F + o.posX + 2.0F) - xD, (yAxis) - additional, texColor);
                                 }

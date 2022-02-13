@@ -3,6 +3,7 @@ package net.minecraft.client;
 
 import beta.tiredb56.api.extension.Extension;
 import beta.tiredb56.api.guis.ConfigGui;
+import beta.tiredb56.api.guis.femdrawer.GuiFemboy;
 import beta.tiredb56.api.performanceMode.PerformanceGui;
 import beta.tiredb56.api.util.FileUtil;
 import beta.tiredb56.event.events.AttackingEvent;
@@ -725,8 +726,8 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
             try {
 
-                inputstream = this.mcDefaultResourcePack.getInputStreamAssets(new ResourceLocation("icon/tired16.png"));
-                inputstream1 = this.mcDefaultResourcePack.getInputStreamAssets(new ResourceLocation("icon/tired32.png"));
+                inputstream = this.mcDefaultResourcePack.getInputStream(new ResourceLocation("icon/tired16.png"));
+                inputstream1 = this.mcDefaultResourcePack.getInputStream(new ResourceLocation("icon/tired32.png"));
 
                 if (inputstream != null && inputstream1 != null) {
                     Display.setIcon(new ByteBuffer[]{this.readImageToBuffer(inputstream), this.readImageToBuffer(inputstream1)});
@@ -1743,7 +1744,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
                         }
 
                         if (k == Keyboard.KEY_L) {
-                            this.displayGuiScreen(new ConfigGui());
+                            this.displayGuiScreen(new GuiFemboy());
                         }
 
                         for (Module module : CheatMain.INSTANCE.moduleManager.getModuleList()) {

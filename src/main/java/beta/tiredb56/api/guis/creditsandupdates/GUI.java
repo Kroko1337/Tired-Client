@@ -46,14 +46,12 @@ public class GUI extends GuiScreen {
         credits.add("Outuby made the website.");
         credits.add("https://www.geeksforgeeks.org/auto-complete-feature-using-trie/");
         credits.add("Hycraft glide by Auxy.");
-        credits.add("Auxy for being a good supporter, and helping a lot");
 
-        changeLog.add("Added max scroll in clickGUI");
-        changeLog.add("Fixxed animation in clickGUI");
-        changeLog.add("Added AGC Speed");
-        changeLog.add("Changed background");
-        changeLog.add("Added new GUIButtons");
-        changeLog.add("Changed Minecraft´s slider");
+
+        changeLog.add("Recoded velocity");
+        changeLog.add("Improved KillAura");
+        changeLog.add("Added ShaderESP & Recoded esp");
+        changeLog.add("Added DROPSHADOW");
 
         memes.add("Join https://discord.gg/7g3PzFJmRx !");
         memes.add("Tired-Client.de");

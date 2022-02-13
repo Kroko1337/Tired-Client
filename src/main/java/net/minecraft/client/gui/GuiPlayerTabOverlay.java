@@ -340,8 +340,8 @@ public class GuiPlayerTabOverlay extends Gui {
 
 
 
-    static class PlayerComparator implements Comparator<NetworkPlayerInfo> {
-        private PlayerComparator() {
+  public  static class PlayerComparator implements Comparator<NetworkPlayerInfo> {
+        public PlayerComparator() {
         }
 
         public int compare(NetworkPlayerInfo p_compare_1_, NetworkPlayerInfo p_compare_2_) {

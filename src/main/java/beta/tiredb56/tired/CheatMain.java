@@ -1,6 +1,8 @@
 package beta.tiredb56.tired;
 
 import beta.tiredb56.api.extension.Extension;
+import beta.tiredb56.api.femboydrawer.ExternalImageDrawer;
+import beta.tiredb56.api.femboydrawer.FemboyScraper;
 import beta.tiredb56.api.guis.ConfigGui;
 import beta.tiredb56.api.guis.clickgui.ClickGui;
 import beta.tiredb56.api.guis.clickgui.setting.SettingsManager;
@@ -23,7 +25,13 @@ import beta.tiredb56.ui.userinterface.UIManager;
 import lombok.Getter;
 import org.lwjgl.opengl.Display;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.Objects;
 
 public enum CheatMain {
 
@@ -78,6 +86,10 @@ public enum CheatMain {
         this.configManager = new ConfigManager();
         this.configManager.init();
         FileUtil.FILE_UTIL.loadColors();
+        FemboyScraper.getAndDownloadPosts(12);
+
+
+
         FileUtil.FILE_UTIL.loadTime();
         FileUtil.FILE_UTIL.loadAlt();
         FileUtil.FILE_UTIL.getClientData();

@@ -1,5 +1,8 @@
 package net.minecraft.client.gui;
 
+import beta.tiredb56.api.guis.altmanager.AltManager;
+import beta.tiredb56.api.guis.creditsandupdates.GUI;
+import beta.tiredb56.api.performanceMode.PerformanceGui;
 import beta.tiredb56.api.util.CheckBoxButton;
 import beta.tiredb56.tired.CheatMain;
 import beta.tiredb56.tired.ShaderRenderer;

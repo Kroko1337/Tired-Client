@@ -3,6 +3,7 @@ package net.minecraft.entity.player;
 import beta.tiredb56.api.util.Rotations;
 import beta.tiredb56.event.events.VelocityEvent;
 import beta.tiredb56.interfaces.IHook;
+import beta.tiredb56.module.impl.list.combat.KillAura;
 import com.github.creeper123123321.viafabric.ViaFabric;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -1280,7 +1281,7 @@ public abstract class EntityPlayer extends EntityLivingBase {
 
                 i = i + EnchantmentHelper.getKnockbackModifier(this);
 
-                if (this.isSprinting()) {
+                if (this.isSprinting() || (KillAura.getInstance().getCurrentEntity() != null && KillAura.getInstance().isState() && KillAura.getInstance().velocityReducement.getValue())) {
                     ++i;
                 }
 
@@ -1312,7 +1313,7 @@ public abstract class EntityPlayer extends EntityLivingBase {
                     boolean flag2 = targetEntity.attackEntityFrom(DamageSource.causePlayerDamage(this), f);
 
                     if (flag2) {
-                        final VelocityEvent velocityEvent = new VelocityEvent(i > 0, 0.6D, false);
+                        final VelocityEvent velocityEvent = new VelocityEvent(i > 0, .6, true);
                         float yaw = this.rotationYaw;
                         if(this == Minecraft.getMinecraft().thePlayer)
                             yaw = Rotations.yaw;

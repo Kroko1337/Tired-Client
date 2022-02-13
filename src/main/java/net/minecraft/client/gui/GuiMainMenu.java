@@ -7,7 +7,7 @@ import beta.tiredb56.api.particle.ParticleRenderer;
 import beta.tiredb56.api.performanceMode.PerformanceGui;
 import beta.tiredb56.api.performanceMode.UsingType;
 import beta.tiredb56.api.util.FileUtil;
-import beta.tiredb56.api.util.TimeStorage;
+import beta.tiredb56.api.util.Scissoring;
 import beta.tiredb56.api.util.Translate;
 import beta.tiredb56.api.util.font.CustomFont;
 import beta.tiredb56.api.util.font.FontManager;
@@ -17,8 +17,6 @@ import beta.tiredb56.shader.list.ArrayListShader;
 import beta.tiredb56.shader.list.BackGroundShader;
 import beta.tiredb56.tired.CheatMain;
 import beta.tiredb56.tired.ShaderRenderer;
-import beta.tiredb56.ui.userinterface.UIManager;
-import beta.tiredb56.ui.userinterface.renderers.UIMainMenu;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
@@ -37,6 +35,7 @@ import net.optifine.reflect.Reflector;
 import org.apache.commons.io.Charsets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -45,7 +44,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -54,6 +52,7 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
     private static final Logger logger = LogManager.getLogger();
     private static final Random RANDOM = new Random();
     private int blurRadius = 0;
+    private float animation = 0;
 
     /**
      * Counts the number of screen updates.
@@ -64,6 +63,7 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
     private Translate translate;
     private ParticleRenderer particleRenderer;
     private boolean extended = true;
+    private int scrollAmount = 4;
     /**
      * The splash message.
      */
@@ -97,11 +97,14 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
      */
     private String openGLWarning1;
 
+    private static STATE currentTab;
+
     /**
      * OpenGL graphics card warning.
      */
     private String openGLWarning2;
 
+    private GuiButton singlePlayer;
     /**
      * Link to the Mojang Support about minimum requirements
      */
@@ -117,6 +120,7 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
     private int field_92024_r;
     private int field_92023_s;
     private int field_92022_t;
+    private int yAnimation = 0;
     private int field_92021_u;
     private int field_92020_v;
     private int field_92019_w;
@@ -254,8 +258,8 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
             this.addSingleplayerMultiplayerButtons(j, 24);
         }
         int defaultHeight = this.height / 4 + 48;
-        this.buttonList.add(new GuiButton(0, this.width / 2 - 100, defaultHeight + 94, 98, 20, I18n.format("menu.options", new Object[0])));
-        this.buttonList.add(new GuiButton(4, this.width / 2 + 2, defaultHeight + 94, 98, 20, I18n.format("menu.quit", new Object[0])));
+        //     this.buttonList.add(new GuiButton(0, this.width / 2 - 100, defaultHeight + 94, 98, 20, I18n.format("menu.options", new Object[0])));
+        //      this.buttonList.add(new GuiButton(4, this.width / 2 + 2, defaultHeight + 94, 98, 20, I18n.format("menu.quit", new Object[0])));
 
 
         synchronized (this.threadLock) {
@@ -263,9 +267,9 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
             this.field_92024_r = this.fontRendererObj.getStringWidth(this.openGLWarning2);
             int k = Math.max(this.field_92023_s, this.field_92024_r);
             this.field_92022_t = (this.width - k) / 2;
-            this.field_92021_u = ((GuiButton) this.buttonList.get(0)).yPosition - 24;
-            this.field_92020_v = this.field_92022_t + k;
-            this.field_92019_w = this.field_92021_u + 24;
+            //    this.field_92021_u = ((GuiButton) this.buttonList.get(0)).yPosition - 24;
+            // //  this.field_92020_v = this.field_92022_t + k;
+            //   this.field_92019_w = this.field_92021_u + 24;
         }
 
         this.mc.setConnectedToRealms(false);
@@ -281,16 +285,44 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
      */
     private void addSingleplayerMultiplayerButtons(int p_73969_1_, int p_73969_2_) {
         int defaultHeight = this.height / 4 + 48;
-        this.buttonList.add(new GuiButton(1, this.width / 2 - 100, defaultHeight + 24, I18n.format("menu.singleplayer", new Object[0])));
-        this.buttonList.add(new GuiButton(2, this.width / 2 - 100, defaultHeight + 45, I18n.format("menu.multiplayer", new Object[0])));
-        this.buttonList.add(new GuiButton(1222, 10, 10, 200, 20, "UpdatesAndCredits"));
-        if (Reflector.GuiModList_Constructor.exists()) {
-            this.buttonList.add(this.realmsButton = new GuiButton(14, this.width / 2 - 100, defaultHeight + 54, 98, 20, I18n.format("Account Login", new Object[0]).replace("Minecraft", "").trim()));
-            this.buttonList.add(this.modButton = new GuiButton(6, 20, p_73969_1_ + p_73969_2_ * 2, 98, 20, I18n.format("fml.menu.mods", new Object[0])));
-        } else {
-            this.buttonList.add(this.realmsButton = new GuiButton(14, this.width / 2 - 100, defaultHeight + 66, I18n.format("Account Login", new Object[0])));
+        int yAxis = -20;
+        int xAxis = 70;
+        int xAxisFick = 40;
+        for (STATE state : STATE.values()) {
+            if (state == STATE.SINGLEPLAYER) {
+
+                // final boolean isOver = isOver(30 + xAxisFick, 6, FHook.fontRenderer.getStringWidth(state.auxySchwul) + 4, 15, mouseX, mouseY);
+                //  FHook.fontRenderer.drawCenteredString(state.auxySchwul, 30 + xAxis, 13, isOver ? Integer.MIN_VALUE : -1);
+                xAxis += 130;
+                xAxisFick += 130;
+                yAxis += 150;
+
+
+                int wheel = Mouse.getDWheel();
+
+
+                if (wheel < 0) {
+                    if (yAxis + height > 12) scrollAmount -= 16;
+                } else if (wheel > 0) {
+                    scrollAmount += 34;
+                    if (scrollAmount > 0)
+                        scrollAmount = 0;
+                }
+
+                singlePlayer = new GuiButton(1, 2, 2, "test");
+                // this.buttonList.add(singlePlayer = new GuiButton(1, this.width / 2 - 100, yAxis + scrollAmount, I18n.format("menu.singleplayer", new Object[0])));
+            }
         }
-        this.buttonList.add(new GuiButton(20, 10, 40, "Change Performance Mode"));
+
+        //  this.buttonList.add(new GuiButton(2, this.width / 2 - 100, defaultHeight + 45, I18n.format("menu.multiplayer", new Object[0])));
+        //     this.buttonList.add(new GuiButton(1222, 10, 10, 200, 20, "UpdatesAndCredits"));
+        if (Reflector.GuiModList_Constructor.exists()) {
+            // this.buttonList.add(this.realmsButton = new GuiButton(14, this.width / 2 - 100, defaultHeight + 54, 98, 20, I18n.format("Account Login", new Object[0]).replace("Minecraft", "").trim()));
+            //   this.buttonList.add(this.modButton = new GuiButton(6, 20, p_73969_1_ + p_73969_2_ * 2, 98, 20, I18n.format("fml.menu.mods", new Object[0])));
+        } else {
+            //   this.buttonList.add(this.realmsButton = new GuiButton(14, this.width / 2 - 100, defaultHeight + 66, I18n.format("Account Login", new Object[0])));
+        }
+        //  this.buttonList.add(new GuiButton(20, 10, 40, "Change Performance Mode"));
     }
 
     /**
@@ -421,66 +453,64 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
 
 
         shader.render(0, 0, width, height);
+        ShaderRenderer.stopBlur();
+        doRender(mouseX, mouseY);
 
-        //   Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRoundedRectangle(width / 2f - widthA, height / 4f + 25, width / 2f + widthA, height / 4f + 175, 12, Integer.MIN_VALUE);
-//        RenderUtil.glDrawRoundedRectEllipse(width / 3f, height / 4f + 15, width / 3, height / 4f + 45, RenderUtil.RoundingMode.FULL, 42, 5, Integer.MIN_VALUE);
         GlStateManager.popMatrix();
 
         ShaderRenderer.startBlur();
-        Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRoundedRectangle(width / 2f - widthA, height / 4f + 25, width / 2f + widthA, height / 4f + 175, 12, Integer.MIN_VALUE);
+
+        doRender(mouseX, mouseY);
+
+        Gui.drawRect(0, 1, width, 30, -1);
+
+        FHook.login.drawCenteredString("TIRED", 30, 10, -1);
         ShaderRenderer.stopBlur();
-        Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRoundedRectangle(width / 2f - widthA, height / 4f + 25, width / 2f + widthA, height / 4f + 175, 12, Integer.MIN_VALUE);
-        FHook.login.drawCenteredString("TIRED", width / 2 - 2, height / 4 + 40, -1);
-        ShaderRenderer.startBlur();
+        FHook.login.drawCenteredString("TIRED", 30, 10, -1);
+
+        doRender(mouseX, mouseY);
+
+        {
+            int yAxis = -20;
+            int xAxis = 70;
+            int xAxisFick = 40;
+            for (STATE state : STATE.values()) {
+                final boolean isOver = isOver(30 + xAxisFick, 6, FHook.fontRenderer.getStringWidth(state.auxySchwul) + 4, 15, mouseX, mouseY);
+                FHook.fontRenderer.drawCenteredString(state.auxySchwul, 30 + xAxis, 13, isOver ? Integer.MIN_VALUE : -1);
+                xAxis += 130;
+                xAxisFick += 130;
+                yAxis += 150;
 
 
-        if (extended) {
-            Gui.drawRect(width, 1, width - 211, 420, -1);
+                int wheel = Mouse.getDWheel();
+
+
+                if (wheel < 0) {
+                    if (yAxis + height > 12) scrollAmount -= 16;
+                } else if (wheel > 0) {
+                    scrollAmount += 124;
+                    if (scrollAmount > 0)
+                        scrollAmount = 0;
+                }
+
+              //  scrollAmount = (int) beta.tiredb56.api.util.renderapi.AnimationUtil.getAnimationState(animation, scrollAmount, 140);
+
+            }
+        }
+
+        if (currentTab == null) {
+            currentTab = STATE.ALTMANAGER;
         }
 
 
-        FHook.login.drawCenteredString("TIRED", width / 2 - 2, height / 4 + 40, -1);
-        ShaderRenderer.stopBlur();
-        FHook.login.drawCenteredString("TIRED", width / 2 - 2, height / 4 + 40, -1);
+        if (scrollAmount == 298) {
+            currentTab = currentTab.next();
+        }
 
-        final boolean isOver = isOver(width - 25, 5, 16, 10, mouseX, mouseY);
-
-
-        FontManager.SFPROBig.drawString("...", width - 25, 1, isOver ? Integer.MIN_VALUE : -1);
 
         ArrayList<String> mods = new ArrayList<>(changeLog);
         mods.sort(Comparator.comparingDouble(m -> -FontManager.SFPRO.getStringWidth(m)));
-        if (extended) {
 
-            Date date = new Date();
-            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-
-            lastY = 30;
-            FontManager.SFPROBig.drawStringWithShadow(formatter.format(date), (width - 138), lastY, -1);
-
-        }
-
-        if (extended) {
-            Gui.drawRect(width, lastY + 49, width - 211, lastY + 50, Integer.MIN_VALUE);
-        }
-
-        if (extended) {
-
-            long estimatedTime = System.currentTimeMillis() - TimeStorage.currentTime;
-
-            int seconds = (int) (estimatedTime / 1000) % 60;
-            int minutes = (int) ((estimatedTime / (1000 * 60)) % 60);
-            int hours = (int) ((estimatedTime / (1000 * 60 * 60)) % 24);
-
-
-            FontManager.SFPROBig.drawString("ClientVersion: " + CheatMain.INSTANCE.VERSION, width - 200, lastY + 58 + .5f, Integer.MIN_VALUE);
-            FontManager.SFPROBig.drawString("PlayTime: " + hours + "h " + minutes + "m, " + seconds + "s", width - 200, lastY + 81 + .5f, Integer.MIN_VALUE);
-
-            arrayListShader.drawShader();
-            FontManager.SFPROBig.drawString("PlayTime: " + hours + "h " + minutes + "m, " + seconds + "s", width - 200, lastY + 81, -1);
-            FontManager.SFPROBig.drawString("ClientVersion: " + CheatMain.INSTANCE.VERSION, width - 200, lastY + 58, -1);
-            arrayListShader.stop();
-        }
 
         if (Reflector.FMLCommonHandler_getBrandings.exists()) {
             Object object = Reflector.call(Reflector.FMLCommonHandler_instance);
@@ -520,15 +550,149 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
         }
     }
 
+    private void renderRect(int x, int y) {
+
+        width = 220;
+        height = 220;
+      drawRect((float) x, y, (float) x + (float) width, y + (float) height, Integer.MIN_VALUE);
+    }
+
+    private void renderCard(String text, int x, int y, double width, double height, String test) {
+
+        width = 220;
+        height = 220;
+        Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRect((float) x, y, (float) x + (float) width, y + (float) height, Integer.MIN_VALUE);
+
+
+        // Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRect((float) x, y, (float) x + (float) width, y + (float) height, Integer.MIN_VALUE);
+
+
+        FHook.fontRenderer.drawString(text, calculateMiddle(text, FHook.fontRenderer, x, (int) (width)), y + 8, -1);
+
+        mc.getTextureManager().bindTexture(new ResourceLocation("client/mainmenu/" + test));
+        int size = (int) width - 10;
+        GUI.drawModalRectWithCustomSizedTexture(x + 5, y + 20, size, size + 13, size, size - 13, size, size);
+
+    }
+
+    private void doRender(int mouseX, int mouseY) {
+        Scissoring.SCISSORING.startScissor();
+        Scissoring.SCISSORING.scissorOtherWay(0, 44, 600, 540);
+     //   Extension.EXTENSION.getGenerallyProcessor().renderProcessor.renderGradient(0, 44, 600, 110, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        int yAxis2 = -20;
+        for (STATE state : STATE.values()) {
+            yAxis2 += 250;
+
+
+            int wheel = Mouse.getDWheel();
+
+
+            if (wheel < 0) {
+                if (yAxis2 + height > 12) scrollAmount -= 66;
+            } else if (wheel > 0) {
+                scrollAmount += 77;
+                if (scrollAmount > 0)
+                    scrollAmount = 0;
+            }
+
+            if (scrollAmount < -1100) {
+                scrollAmount ++;
+            }
+
+
+            if (state == STATE.SINGLEPLAYER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                renderCard("Singleplayer", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 90 + animation, 90 + animation, "singleplayer.png");
+                if (isOver) {
+                   // renderRect("", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation));
+                }
+            }
+
+            if (state == STATE.ALTMANAGER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                renderCard("AltManager", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 90 + animation, 90 + animation, "altmanager.png");
+                if (isOver) {
+               //     renderRect("", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation));
+                }
+            }
+
+            if (state == STATE.CREDITS) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                renderCard("Credits", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 90 + animation, 90 + animation, "credits.png");
+                if (isOver) {
+                 //   renderRect("", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation));
+                }
+            }
+
+            if (state == STATE.PERFORMANCE_MODE) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                renderCard("Performancemode", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 90 + animation, 90 + animation, "performance.png");
+                if (isOver) {
+                  //  renderRect("", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation));
+                }
+            }
+
+            if (state == STATE.MULTIPLAYER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                if (isOver) {
+                   // renderRect((int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation));
+                }
+                renderCard("Multiplayer", (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 90 + animation, 90 + animation, "multiplayer.png");
+            }
+        }
+        Scissoring.SCISSORING.disableScissor();
+    }
+
     /**
      * Called when the mouse is clicked. Args : mouseX, mouseY, clickedButton
      */
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        final boolean isOver = isOver(width - 25, 5, 16, 10, mouseX, mouseY);
-        if (isOver) {
 
-            extended = !extended;
+
+
+        int yAxis2 = -20;
+        for (STATE state : STATE.values()) {
+            yAxis2 += 250;
+
+
+      
+            if (state == STATE.SINGLEPLAYER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                if (isOver) {
+                    mc.displayGuiScreen(new GuiSelectWorld(this));
+                }
+            }
+
+            if (state == STATE.ALTMANAGER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                if (isOver) {
+                    mc.displayGuiScreen(new AltManager());
+                }
+            }
+
+            if (state == STATE.CREDITS) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation), 220, 220, mouseX, mouseY);
+                if (isOver) {
+                    mc.displayGuiScreen(new GUI());
+                }
+            }
+
+            if (state == STATE.PERFORMANCE_MODE) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation),220, 220, mouseX, mouseY);
+                if (isOver) {
+                    mc.displayGuiScreen(new PerformanceGui());
+                }
+            }
+
+            if (state == STATE.MULTIPLAYER) {
+                final boolean isOver = isOver( (int) (-100 + width / 2 + animation), (int) (30 + yAxis2 + scrollAmount + animation),220, 220, mouseX, mouseY);
+                if (isOver) {
+                    mc.displayGuiScreen(new GuiMultiplayer(this));
+                }
+
+            }
         }
+
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
         synchronized (this.threadLock) {
@@ -561,5 +725,28 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
     public boolean isOver(int x, int y, int width, int height, int mouseX, int mouseY) {
         return mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height;
     }
+
+    enum STATE {
+        SINGLEPLAYER("SinglePlayer"), MULTIPLAYER("MultiPlayer"), ALTMANAGER("AltManager"), CREDITS("Credits"), PERFORMANCE_MODE("PerformanceMode");
+
+        final String auxySchwul;
+
+        STATE(String caseFix) {
+            this.auxySchwul = caseFix;
+        }
+
+        static
+        public final STATE[] values = values();
+
+        public STATE prev() {
+            return values[(ordinal() - 1 + values.length) % values.length];
+        }
+
+        public STATE next() {
+            return values[(ordinal() + 1) % values.length];
+        }
+
+    }
+
 
 }

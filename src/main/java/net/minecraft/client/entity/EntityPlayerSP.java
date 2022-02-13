@@ -15,16 +15,11 @@ import beta.tiredb56.module.impl.list.visual.ClickGUI;
 import beta.tiredb56.module.impl.list.world.ScaffoldWalk;
 import beta.tiredb56.tired.CheatMain;
 import beta.tiredb56.tired.TiredCore;
+import com.google.common.collect.Ordering;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MovingSoundMinecartRiding;
 import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.GuiCommandBlock;
-import net.minecraft.client.gui.GuiEnchantment;
-import net.minecraft.client.gui.GuiHopper;
-import net.minecraft.client.gui.GuiMerchant;
-import net.minecraft.client.gui.GuiRepair;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiScreenBook;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiBeacon;
 import net.minecraft.client.gui.inventory.GuiBrewingStand;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -34,6 +29,7 @@ import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.gui.inventory.GuiFurnace;
 import net.minecraft.client.gui.inventory.GuiScreenHorseInventory;
 import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.command.server.CommandBlockLogic;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.IMerchant;
@@ -62,7 +58,10 @@ import net.minecraft.world.IInteractionObject;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.Display;
 
-public class EntityPlayerSP extends AbstractClientPlayer {
+import java.util.ArrayList;
+import java.util.List;
+
+public class    EntityPlayerSP extends AbstractClientPlayer {
     public final NetHandlerPlayClient sendQueue;
     private final StatFileWriter statWriter;
 
@@ -512,6 +511,22 @@ public class EntityPlayerSP extends AbstractClientPlayer {
     public void setSprinting(boolean sprinting) {
         super.setSprinting(sprinting);
         this.sprintingTicksLeft = sprinting ? 600 : 0;
+    }
+
+    private static final Ordering<NetworkPlayerInfo> field_175252_a =  Ordering.from(new GuiPlayerTabOverlay.PlayerComparator());
+
+    public ArrayList<NetworkPlayerInfo> searchPlayers(String name) {
+        final ArrayList<NetworkPlayerInfo> playerInfos = new ArrayList<>();
+        List<NetworkPlayerInfo> list = field_175252_a.<NetworkPlayerInfo>sortedCopy(sendQueue.getPlayerInfoMap());
+        for (int i = 0; i < list.size(); ++i) {
+            NetworkPlayerInfo entityplayer = list.get(i);
+
+            if (name.equals(entityplayer.getGameProfile().getName())) {
+                playerInfos.add(entityplayer);
+            }
+        }
+
+        return playerInfos;
     }
 
     /**

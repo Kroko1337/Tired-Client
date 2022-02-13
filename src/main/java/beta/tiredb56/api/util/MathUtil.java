@@ -20,4 +20,14 @@ public class MathUtil {
 		return Math.round(current / max * 1000.0) / 100.0;
 	}
 
+	public static double getRandomSin(double min, double max) {
+		double random = Math.sin((double) System.currentTimeMillis()) * (max - min);
+		if (random < 0.0D) {
+			random = Math.abs(random);
+		}
+
+		return random + min;
+	}
+
+
 }

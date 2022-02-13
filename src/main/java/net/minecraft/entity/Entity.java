@@ -1343,12 +1343,7 @@ public abstract class Entity implements ICommandSender {
         }
 
 
-        yaw = rotationYaw;
-        pitch = rotationPitch;
-
         if (partialTicks == 1.0F) {
-
-
             yaw = rotationYaw;
             pitch = rotationPitch;
 

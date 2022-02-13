@@ -5,9 +5,8 @@ import beta.tiredb56.api.extension.Extension;
 import beta.tiredb56.api.guis.clickgui.setting.ModeSetting;
 import beta.tiredb56.api.guis.clickgui.setting.NumberSetting;
 import beta.tiredb56.api.guis.clickgui.setting.impl.BooleanSetting;
-import beta.tiredb56.api.util.RayCastUtil;
-import beta.tiredb56.api.util.Rotations;
-import beta.tiredb56.api.util.TimerUtil;
+import beta.tiredb56.api.logger.impl.IngameChatLog;
+import beta.tiredb56.api.util.*;
 import beta.tiredb56.api.util.font.FontManager;
 import beta.tiredb56.api.util.rotation.RotationSender;
 import beta.tiredb56.event.EventTarget;
@@ -17,7 +16,6 @@ import beta.tiredb56.module.Module;
 import beta.tiredb56.module.ModuleCategory;
 import beta.tiredb56.module.ModuleManager;
 import beta.tiredb56.module.impl.list.visual.ClickGUI;
-import com.github.creeper123123321.viafabric.ViaFabric;
 import lombok.Getter;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -34,19 +32,23 @@ import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemSword;
 import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.server.S0CPacketSpawnPlayer;
 import net.minecraft.network.play.server.S14PacketEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Vec3;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.UUID;
 
 @ModuleAnnotation(name = "KillAura", key = Keyboard.KEY_NONE, category = ModuleCategory.COMBAT, clickG = "Attack players around you!")
 public class KillAura extends Module {
@@ -83,24 +85,25 @@ public class KillAura extends Module {
 
     public float[] lastRotations;
 
-    public NumberSetting smoothing = new NumberSetting("Smoothing", this, 30, 1, 1000, 1);
+    public NumberSetting smoothing = new NumberSetting("Smoothing", this, 30, 1, 200, 1);
     public float[] serverRotations = new float[2];
     private float[] serverAngles = new float[2];
     public NumberSetting minCPS = new NumberSetting("minCPS", this, 12, 1, 20, 1);
     public NumberSetting maxCPS = new NumberSetting("maxCPS", this, 12, 1, 20, 1);
+    public NumberSetting preRange = new NumberSetting("preRange", this, 1, .1, 6, .1);
     public NumberSetting range = new NumberSetting("Range", this, 3, .1, 6, .1);
     public BooleanSetting rotations = new BooleanSetting("Rotations", this, true);
     public BooleanSetting targetHUD = new BooleanSetting("targetHUD", this, true);
     public BooleanSetting autoBlock = new BooleanSetting("autoBlock", this, true);
+    public BooleanSetting randomRotations = new BooleanSetting("randomRotations", this, true);
+    public BooleanSetting UUIDCheck = new BooleanSetting("UUIDCheck", this, true);
     public BooleanSetting bestBlock = new BooleanSetting("bestBlock", this, true, () -> autoBlock.getValue());
     public BooleanSetting NewHit = new BooleanSetting("1.9Hitting", this, true);
-
     public BooleanSetting crack = new BooleanSetting("crack", this, true);
     public BooleanSetting lockView = new BooleanSetting("lockView", this, true, () -> rotations.getValue());
     public BooleanSetting rayCast = new BooleanSetting("rayCast", this, true);
     public BooleanSetting movementFix = new BooleanSetting("movementFix", this, true, () -> rotations.getValue());
     public BooleanSetting stab = new BooleanSetting("stab", this, true);
-
     public BooleanSetting renderRotations = new BooleanSetting("RenderRotations", this, true, () -> rotations.getValue());
     public BooleanSetting predict = new BooleanSetting("predict", this, true, () -> rotations.getValue());
     public BooleanSetting bestVec = new BooleanSetting("bestVec", this, true, () -> rotations.getValue());
@@ -110,15 +113,22 @@ public class KillAura extends Module {
     public ModeSetting autoBlockMode = new ModeSetting("AutoBlockMode", this, new String[]{"Legit", "Full", "Stab", "Fake"}, () -> autoBlock.getValue());
     public ModeSetting raycastMode = new ModeSetting("raycastMode", this, new String[]{"ClickMouse", "MC"}, () -> rayCast.getValue());
     public ModeSetting targetHudMode = new ModeSetting("targetHudMode", this, new String[]{"Tired1", "Rounded"}, () -> targetHUD.getValue());
+    public ModeSetting randomMode = new ModeSetting("randomMode", this, new String[]{"Heuristics", "Math.Random"}, () -> randomRotations.getValue());
     public BooleanSetting mobs = new BooleanSetting("Mobs", this, true);
     public BooleanSetting animals = new BooleanSetting("Animals", this, true);
     public BooleanSetting invisibles = new BooleanSetting("Invisibles", this, true);
     public BooleanSetting rotationESP = new BooleanSetting("rotationESP", this, true);
     public BooleanSetting noSprint = new BooleanSetting("noSprint", this, true);
+    public BooleanSetting velocityReducement = new BooleanSetting("velocityReducement", this, true);
     public BooleanSetting aliveCheck = new BooleanSetting("AliveCheck", this, true);
     public BooleanSetting tickAttack = new BooleanSetting("tickAttack", this, true);
 
     public BooleanSetting absoluteRot = new BooleanSetting("absoluteRot", this, true);
+    private final ArrayList<Entity> fakePlayers = new ArrayList<>();
+
+    private final ArrayList<UUID> fakes = new ArrayList<>();
+    private final ArrayList<UUID> tooProof = new ArrayList<>();
+    private final ArrayList<Entity> notDuplicates = new ArrayList<>();
 
     public KillAura() {
         this.lastRotations = new float[]{0.0f, 0.0f};
@@ -127,13 +137,25 @@ public class KillAura extends Module {
     //aus minecraft src
     @EventTarget
     public void onPacket(PacketEvent e) {
+
+        if (e.getPacket() instanceof S0CPacketSpawnPlayer) {
+            final S0CPacketSpawnPlayer cPacketSpawnPlayer = (S0CPacketSpawnPlayer) e.getPacket();
+            final MojangUtil mojangUtil = MojangUtil.getInstance();
+            try {
+                if (!mojangUtil.existUUID(cPacketSpawnPlayer.getPlayer().toString())) {
+                    fakes.add(cPacketSpawnPlayer.getPlayer());
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
         if (e.getPacket() instanceof S14PacketEntity) {
             final S14PacketEntity packetEntity = (S14PacketEntity) e.getPacket();
             if (rotations.getValue()) {
                 if (getCurrentEntity() != null && absoluteRot.getValue()) {
                     Rotations.server_yaw = packetEntity.func_149060_h() ? (float) (packetEntity.func_149066_f() * 360) / 256.0F : Rotations.server_yaw;
                     Rotations.server_pitch = packetEntity.func_149060_h() ? (float) (packetEntity.func_149063_g() * 360) / 256.0F : Rotations.server_pitch;
-
                 }
             }
         }
@@ -215,6 +237,40 @@ public class KillAura extends Module {
         }
     }
 
+    private void checkPlayers() {
+        if (!tooProof.isEmpty()) {
+            boolean finished = true;
+            for (UUID uuid : tooProof) {
+                final EntityPlayer entityPlayer = getWorld().getPlayerEntityByUUID(uuid);
+                if (entityPlayer != null) {
+                    if (getPlayer().searchPlayers(entityPlayer.getName()).size() <= 1) {
+                        notDuplicates.add(entityPlayer);
+                    }
+                } else {
+                    finished = false;
+                }
+            }
+            if (finished)
+                tooProof.clear();
+        }
+
+        if (!fakes.isEmpty()) {
+            boolean finished = true;
+            for (UUID uuid : fakes) {
+                final EntityPlayer entityPlayer = getWorld().getPlayerEntityByUUID(uuid);
+                if (entityPlayer != null) {
+                    if (!fakePlayers.contains(entityPlayer)) {
+                        fakePlayers.add(entityPlayer);
+                    }
+                } else {
+                    finished = false;
+                }
+            }
+            if (finished)
+                fakes.clear();
+        }
+    }
+
     @EventTarget
     public void onRotation(RotationEvent e) {
 
@@ -231,7 +287,7 @@ public class KillAura extends Module {
 
         float yawGCD, pitchGCD;
 
-        float sens = getSensitivityMultiplier();
+
 
         float yaw = serverAngles[0];
         float pitch = serverAngles[1];
@@ -251,14 +307,19 @@ public class KillAura extends Module {
         setupRotationUsing(e, new float[]{Rotations.server_yaw, Rotations.server_pitch});
         MC.thePlayer.rotationPitchHead = e.getPitch();
     }
-
     @EventTarget
     public void onUpdate(UpdateEvent e) {
+        checkPlayers();
         if (getCurrentEntity() != null) {
-            final float[] clazzRotations = RotationSender.getEntityRotations(getCurrentEntity(), lastRotations, smoothing.getValueInt(), predict.getValue(), bestVec.getValue());
+
+            final float[] clazzRotations = RotationSender.getEntityRotations(getCurrentEntity(), predict.getValue(), bestVec.getValue(), randomMode.getValue().equalsIgnoreCase("Heuristics") && randomRotations.getValue());
 
             final float[] serverAngle = new float[]{Rotations.beforeYaw, Rotations.beforePitch};
 
+            if (randomRotations.getValue() && randomMode.getValue().equalsIgnoreCase("Math.Random")) {
+                clazzRotations[0] += MathUtil.getRandom(-4, 6);
+                clazzRotations[1] += MathUtil.getRandom(-4, 6);
+            }
             serverAngles = smoothAngle(clazzRotations, serverAngle);
 
 
@@ -273,7 +334,7 @@ public class KillAura extends Module {
         }
 
         for (Entity entity : MC.theWorld.loadedEntityList) {
-            if (shouldAttack(entity, .5)) {
+            if (shouldAttack(entity, preRange.getValue())) {
                 setEntity(entity);
             }
         }
@@ -282,7 +343,7 @@ public class KillAura extends Module {
             MC.thePlayer.setSprinting(false);
         }
 
-        if (!shouldAttack(currentEntity, .5)) {
+        if (!shouldAttack(currentEntity, preRange.getValue())) {
             setEntity(null);
             MC.thePlayer.ticksos = 0;
             {
@@ -300,8 +361,10 @@ public class KillAura extends Module {
             }
             executed = false;
             isAutoBlocking = false;
-            stabCount--;
-            MC.gameSettings.keyBindRight.setPressed(false);
+            if (stab.getValue()) {
+                stabCount--;
+                MC.gameSettings.keyBindRight.setPressed(false);
+            }
         }
 
         if (autoBlock.getValue() && getCurrentEntity() != null) {
@@ -319,12 +382,6 @@ public class KillAura extends Module {
         Rotations.yawDifference = Math.abs(Rotations.server_yaw - prevRotation[0]);
 
     }
-
-    public static float getSensitivityMultiplier() {
-        float f = MC.gameSettings.mouseSensitivity * 0.6F + 0.2F;
-        return (f * f * f * 8.0F) * 0.15F;
-    }
-
 
     private void doStab() {
 
@@ -390,7 +447,7 @@ public class KillAura extends Module {
                     break;
                 case "MC":
                     if (RayCastUtil.raycastEntity(range.getValue(), new float[]{Rotations.server_yaw, Rotations.server_pitch}) != null) {
-                        MC.getNetHandler().addToSendQueue(new C02PacketUseEntity(RayCastUtil.raycastEntity(range.getValue(), new float[]{Rotations.server_yaw, Rotations.server_pitch}), C02PacketUseEntity.Action.ATTACK));
+                        MC.getNetHandler().addToSendQueue(new C02PacketUseEntity(Objects.requireNonNull(RayCastUtil.raycastEntity(range.getValue(), new float[]{Rotations.server_yaw, Rotations.server_pitch})), C02PacketUseEntity.Action.ATTACK));
                         MC.thePlayer.swingItem();
                     }
             }
@@ -414,8 +471,11 @@ public class KillAura extends Module {
                 }
                 break;
                 case "Full": {
-                    MC.rightClickMouse();
-                    }
+                //    C07PacketPlayerDigging unblock = new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, new BlockPos(0, 0, 0), EnumFacing.DOWN);
+                //    MC.thePlayer.sendQueue.addToSendQueue(unblock);
+                    MC.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.STOP_DESTROY_BLOCK, MC.thePlayer.getPosition(), EnumFacing.DOWN));
+                    MC.thePlayer.sendQueue.addToSendQueue(new C02PacketUseEntity(getCurrentEntity(), new Vec3(getCurrentEntity().posX, getCurrentEntity().posY, getCurrentEntity().posZ)));
+                }
                     this.isAutoBlocking = true;
 
                     break;
@@ -423,6 +483,7 @@ public class KillAura extends Module {
             }
         }
     }
+
 
     public void renderTargetHUD(boolean rect) {
         float startX = 77;
@@ -508,13 +569,7 @@ public class KillAura extends Module {
                 float maxX = Math.max(maxX2, FontManager.robotoF.getStringWidth(KillAura.getInstance().name) + 120);
                 animationX = (float) beta.tiredb56.api.util.renderapi.AnimationUtil.getAnimationState(animationX, (maxX * healthPercentage), 88);
                 Gui.drawRect(renderX, renderY + 58, renderX + (animationX), renderY + 60, ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getRGB());
-
                 break;
-
-            //    Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawRoundedRect(renderX, renderY, renderX + maxX3, renderY + 60, 3, Integer.MIN_VALUE);
-
-            //    Extension.EXTENSION.getGenerallyProcessor().renderProcessor.drawPlayerHeadCircle(((EntityPlayer) getCurrentEntity()), (int) renderX + 6, (int) renderY + 20, 30, 30);
-
         }
 
     }
@@ -547,7 +602,6 @@ public class KillAura extends Module {
         }
 
     }
-
     public void setEntity(Entity e) {
         this.currentEntity = e;
     }
@@ -579,8 +633,8 @@ public class KillAura extends Module {
     public void getLook(EventLook event) {
         if (rotations.getValue()) {
             {
-                event.setYaw(Rotations.server_yaw);
-                event.setPitch(Rotations.server_pitch);
+
+                event.setRotations(serverRotations);
             }
         }
     }
@@ -607,6 +661,9 @@ public class KillAura extends Module {
         if (player instanceof EntityAnimal && !animals.getValue()) return false;
         if (player instanceof EntityMob && !mobs.getValue()) return false;
         if (player instanceof EntityVillager && !villagers.getValue()) return false;
+
+        if (UUIDCheck.getValue() && fakePlayers.contains(player)) return false;
+
         if (player instanceof EntityArmorStand) return false;
         if (player.isInvisibleToPlayer(MC.thePlayer) && !invisibles.getValue()) return false;
         if (!checkWalls.getValue() && !MC.thePlayer.canEntityBeSeen(player)) return false;
@@ -743,16 +800,10 @@ public class KillAura extends Module {
         smoothedAngle[0] = (src[0] - dst[0]);
         smoothedAngle[1] = (src[1] - dst[1]);
         smoothedAngle = constrainAngle(smoothedAngle);
-        int random = getRandomInRange(14, 24);
+        int random = MathUtil.getRandom(14, 24);
         smoothedAngle[0] = (src[0] - smoothedAngle[0] / smoothing.getValueInt() * random);
         smoothedAngle[1] = (src[1] - smoothedAngle[1] / smoothing.getValueInt() * random);
         return smoothedAngle;
-    }
-
-    public static int getRandomInRange(int min, int max) {
-        Random rand = new Random();
-
-        return rand.nextInt((max - min) + 1) + min;
     }
 
 

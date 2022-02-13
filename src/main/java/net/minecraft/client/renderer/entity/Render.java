@@ -1,7 +1,9 @@
 package net.minecraft.client.renderer.entity;
 
-import beta.tiredb56.module.impl.list.visual.NameTags;
+import beta.tiredb56.api.extension.Extension;
+import beta.tiredb56.interfaces.IHook;
 import beta.tiredb56.module.impl.list.visual.ESP;
+import beta.tiredb56.module.impl.list.visual.NameTags;
 import beta.tiredb56.tired.CheatMain;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -18,11 +20,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.src.Config;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.world.World;
 import net.optifine.entity.model.IEntityRenderer;
 import net.optifine.shaders.Shaders;
@@ -91,6 +89,7 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
 
     protected boolean bindEntityTexture(T entity)
     {
+
         ResourceLocation resourcelocation = this.getEntityTexture(entity);
 
         if (this.locationTextureCustom != null)
@@ -98,7 +97,7 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
             resourcelocation = this.locationTextureCustom;
         }
 
-        if (resourcelocation == null)
+        if (resourcelocation == null || !Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(entity))
         {
             return false;
         }
@@ -119,6 +118,7 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
      */
     private void renderEntityOnFire(Entity entity, double x, double y, double z, float partialTicks)
     {
+        if (!Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(entity)) return;
         GlStateManager.disableLighting();
         TextureMap texturemap = Minecraft.getMinecraft().getTextureMapBlocks();
         TextureAtlasSprite textureatlassprite = texturemap.getAtlasSprite("minecraft:blocks/fire_layer_0");
@@ -256,26 +256,23 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
 
     private void renderShadowBlock(Block blockIn, double p_180549_2_, double p_180549_4_, double p_180549_6_, BlockPos pos, float p_180549_9_, float p_180549_10_, double p_180549_11_, double p_180549_13_, double p_180549_15_)
     {
-        if (blockIn.isFullCube())
-        {
+        if (blockIn.isFullCube() && Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(blockIn.getSelectedBoundingBox(IHook.MC.theWorld, pos))) {
             Tessellator tessellator = Tessellator.getInstance();
             WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-            double d0 = ((double)p_180549_9_ - (p_180549_4_ - ((double)pos.getY() + p_180549_13_)) / 2.0D) * 0.5D * (double)this.getWorldFromRenderManager().getLightBrightness(pos);
+            double d0 = ((double) p_180549_9_ - (p_180549_4_ - ((double) pos.getY() + p_180549_13_)) / 2.0D) * 0.5D * (double) this.getWorldFromRenderManager().getLightBrightness(pos);
 
-            if (d0 >= 0.0D)
-            {
-                if (d0 > 1.0D)
-                {
+            if (d0 >= 0.0D) {
+                if (d0 > 1.0D) {
                     d0 = 1.0D;
                 }
 
-                double d1 = (double)pos.getX() + blockIn.getBlockBoundsMinX() + p_180549_11_;
-                double d2 = (double)pos.getX() + blockIn.getBlockBoundsMaxX() + p_180549_11_;
-                double d3 = (double)pos.getY() + blockIn.getBlockBoundsMinY() + p_180549_13_ + 0.015625D;
-                double d4 = (double)pos.getZ() + blockIn.getBlockBoundsMinZ() + p_180549_15_;
-                double d5 = (double)pos.getZ() + blockIn.getBlockBoundsMaxZ() + p_180549_15_;
-                float f = (float)((p_180549_2_ - d1) / 2.0D / (double)p_180549_10_ + 0.5D);
-                float f1 = (float)((p_180549_2_ - d2) / 2.0D / (double)p_180549_10_ + 0.5D);
+                double d1 = (double) pos.getX() + blockIn.getBlockBoundsMinX() + p_180549_11_;
+                double d2 = (double) pos.getX() + blockIn.getBlockBoundsMaxX() + p_180549_11_;
+                double d3 = (double) pos.getY() + blockIn.getBlockBoundsMinY() + p_180549_13_ + 0.015625D;
+                double d4 = (double) pos.getZ() + blockIn.getBlockBoundsMinZ() + p_180549_15_;
+                double d5 = (double) pos.getZ() + blockIn.getBlockBoundsMaxZ() + p_180549_15_;
+                float f = (float) ((p_180549_2_ - d1) / 2.0D / (double) p_180549_10_ + 0.5D);
+                float f1 = (float) ((p_180549_2_ - d2) / 2.0D / (double) p_180549_10_ + 0.5D);
                 float f2 = (float)((p_180549_6_ - d4) / 2.0D / (double)p_180549_10_ + 0.5D);
                 float f3 = (float)((p_180549_6_ - d5) / 2.0D / (double)p_180549_10_ + 0.5D);
                 worldrenderer.pos(d1, d3, d4).tex((double)f, (double)f2).color(1.0F, 1.0F, 1.0F, (float)d0).endVertex();
@@ -289,8 +286,8 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
     /**
      * Renders a white box with the bounds of the AABB translated by the offset. Args: aabb, x, y, z
      */
-    public static void renderOffsetAABB(AxisAlignedBB boundingBox, double x, double y, double z)
-    {
+    public static void renderOffsetAABB(AxisAlignedBB boundingBox, double x, double y, double z) {
+        if (!Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(boundingBox)) return;
         GlStateManager.disableTexture2D();
         Tessellator tessellator = Tessellator.getInstance();
         WorldRenderer worldrenderer = tessellator.getWorldRenderer();
@@ -331,6 +328,7 @@ public abstract class Render<T extends Entity> implements IEntityRenderer
      */
     public void doRenderShadowAndFire(Entity entityIn, double x, double y, double z, float yaw, float partialTicks)
     {
+        if (!Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(entityIn)) return;
         if (this.renderManager.options != null)
         {
             if (this.renderManager.options.entityShadows && this.shadowSize > 0.0F && !entityIn.isInvisible() && this.renderManager.isRenderShadow())

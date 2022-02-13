@@ -8,10 +8,6 @@ uniform float blurRadius;
 uniform float blursigma;
 
 
-float gauss(float x) {
-    float sq = x / blursigma;
-    return 1.0 / (abs(blursigma) * 2.50662827) * exp(-0.5 * sq * sq);
-}
 
 //methode ausm blur shader mal gucken ob das genau so gut geht
 float CalcGauss(float x, float sigma)
@@ -31,10 +27,24 @@ float CalcGauss(float x, float sigma)
 //Just testing please dont hate yes yes
 
 void main() {
-    vec4 color = vec4(0);
-    for (float x = -blurRadius; x <= blurRadius; x++) {
-        color += texture2D(currentTexture, gl_TexCoord[0].xy + vec2(texelSize.x * coords.x, texelSize.y * coords.y) * x) * gauss(x);
+    vec3 color = vec3(0.0);
+    vec4 mainColor = texture2D(currentTexture, gl_TexCoord[0].xy);
+    float alpha = 0.0;
+    if (mainColor.a != 0) {
+        gl_FragColor = vec4(mainColor.rgb, 0);
+    } else {
+
+        for (float x = -blurRadius; x - .4 < blurRadius; x++  - .4) {
+            for (float y = -blurRadius; y - .4 < blurRadius; y++  - .4) {
+                vec4 sampleCol = texture2D(currentTexture, gl_TexCoord[0].xy + vec2(texelSize.x * x, texelSize.y * y));
+
+                alpha += sampleCol.a * CalcGauss(x, blursigma);
+
+
+            }
+        }
     }
 
-    gl_FragColor = vec4(pow(u_color.rgb, vec3(1.0/1.0)), pow(color.a, 1.0/1.0));
+    gl_FragColor = vec4(u_color, alpha);
+
 }

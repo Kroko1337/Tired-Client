@@ -97,7 +97,12 @@ public class ClickGui extends GuiScreen {
             ShaderRenderer.stopBlur();
         }
 
-        this.susAmongus = (int) AnimationUtil.getAnimationState(susAmongus, 1000, Math.max(3.6D, Math.abs((double) susAmongus - 1000)) * 2);
+        float amongamongus = resolution.getScaledWidth();
+        if (amongamongus < resolution.getScaledHeight()) {
+            amongamongus = resolution.getScaledHeight();
+        }
+
+        this.susAmongus = (int) AnimationUtil.getAnimationState(susAmongus, amongamongus, Math.max(3.6D, Math.abs((double) susAmongus - amongamongus)) * 2);
 
 
         fadeAnimation = AnimationUtil.getAnimationState(fadeAnimation, 118, 140);
@@ -105,13 +110,14 @@ public class ClickGui extends GuiScreen {
         int anim = mouseWithinCircle(mouseX, mouseY, 20, height - 20, 16) ? 1200 : 0;
         circleAnim = (int) AnimationUtil.getAnimationState(circleAnim, anim, Math.max(3.6D, Math.abs((double) circleAnim - 1200)) * 4);
 
-        Extension.EXTENSION.getGenerallyProcessor().renderProcessor.renderObjectCircle(resolution.getScaledWidth() / 2, resolution.getScaledHeight() / 2, susAmongus, new Color(ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getRed(), ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getGreen(), ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getBlue(), (int) fadeAnimation).getRGB());
-
         translate.interpolate(resolution.getScaledWidth(), resolution.getScaledHeight(), 13);
         GlStateManager.pushMatrix();
         GL11.glTranslatef(resolution.getScaledWidth() / 2f, resolution.getScaledHeight() / 2f, 0);
         GL11.glScaled(translate.getX() / resolution.getScaledWidth(), translate.getY() / resolution.getScaledHeight(), 0);
         GL11.glTranslatef(-resolution.getScaledWidth() / 2f, -resolution.getScaledHeight() / 2f, 0);
+
+        Extension.EXTENSION.getGenerallyProcessor().renderProcessor.renderObjectCircle(resolution.getScaledWidth() / 2, resolution.getScaledHeight() / 2, susAmongus, new Color(ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getRed(), ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getGreen(), ClickGUI.getInstance().colorPickerSetting.getColorPickerColor().getBlue(), (int) fadeAnimation).getRGB());
+
 
         final ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
         if (Flat1.state) {
@@ -163,8 +169,6 @@ public class ClickGui extends GuiScreen {
         }
         double valueSus = mouseWithinCircle(mouseX, mouseY, 20, height - 20, 16) ? 140 : 0;
         fadeAnimButton = (int) AnimationUtil.getAnimationState(fadeAnimButton, valueSus, Math.max(3.6D, Math.abs((double) fadeAnimButton - valueSus)) * 4);
-
-        // FHook.big2.drawCenteredStringWithShadow(sussy, sr.getScaledWidth() / 2, 10, -1);
 
         fadeAnimButton = (int) AnimationUtil.getAnimationState(fadeAnimButton, valueSus, Math.max(3.6D, Math.abs((double) fadeAnimButton - valueSus)) * 4);
 

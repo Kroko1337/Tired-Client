@@ -1,12 +1,12 @@
 package beta.tiredb56.command;
 
-import beta.tiredb56.command.impl.BindCommand;
-import beta.tiredb56.command.impl.ConfigCommand;
-import beta.tiredb56.command.impl.IRC;
+import beta.tiredb56.api.annotations.CommandAnnotation;
 import beta.tiredb56.api.logger.impl.IngameChatLog;
+import org.reflections.Reflections;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
 public class CommandManager {
 
@@ -14,10 +14,17 @@ public class CommandManager {
 
     public CommandManager() {
         COMMANDS = new ArrayList<>();
+        final Reflections reflections = new Reflections("beta.tiredb56.command");
+        final Set<Class<?>> classes = reflections.getTypesAnnotatedWith(CommandAnnotation.class);
+        for (Class<?> aClass : classes) {
+            try {
+                final Command module = (Command) aClass.newInstance();
+                COMMANDS.add(module);
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
 
-        addCommands(
-                new BindCommand(), new IRC(), new ConfigCommand()
-        );
     }
 
     public ArrayList<Command> getCommands() {

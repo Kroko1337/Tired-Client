@@ -93,6 +93,41 @@ public class GuiButton extends Gui {
     /**
      * Draws this button to the screen.
      */
+
+    public void drawButton(Minecraft mc, int mouseX, int mouseY, boolean rect, int xPosition, int yPosition) {
+        if (this.visible) {
+            //  FontRenderer fontrenderer = mc.fontRendererObj;
+            //   mc.getTextureManager().bindTexture(buttonTextures);
+            //  GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            this.hovered = mouseX >= this.xPosition && mouseY >= this.yPosition && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
+            int i = this.getHoverState(this.hovered);
+            //    GlStateManager.enableBlend();
+            //    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+            //   GlStateManager.blendFunc(770, 771);
+            //   this.drawTexturedModalRect(this.xPosition, this.yPosition, 0, 46 + i * 20, this.width / 2, this.height);
+            //   this.drawTexturedModalRect(this.xPosition + this.width / 2, this.yPosition, 200 - this.width / 2, 46 + i * 20, this.width / 2, this.height);
+            if (rect) {
+                RenderProcessor.drawRoundedRectangle(xPosition, yPosition, xPosition + width, yPosition + height, 2, Integer.MIN_VALUE);
+            }
+
+            if (hovered) {
+                RenderProcessor.drawRoundedRectangle(xPosition, yPosition, xPosition + width, yPosition + height, 2, new Color(1, 1, 1, 30).getRGB());
+            }
+
+            this.mouseDragged(mc, mouseX, mouseY);
+            int j = 14737632;
+
+            if (!this.enabled) {
+                j = 10526880;
+            } else if (this.hovered) {
+                j = 16777120;
+            }
+
+            FHook.fontRenderer.drawCenteredString(this.displayString, xPosition + this.width / 2, yPosition + (this.height - 8) / 2 + 2, -1);
+        }
+    }
+
+
     public void drawButton(Minecraft mc, int mouseX, int mouseY, boolean rect) {
         if (this.visible) {
             //  FontRenderer fontrenderer = mc.fontRendererObj;

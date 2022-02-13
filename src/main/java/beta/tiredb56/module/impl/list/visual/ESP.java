@@ -2,11 +2,14 @@ package beta.tiredb56.module.impl.list.visual;
 
 import beta.tiredb56.api.annotations.ModuleAnnotation;
 import beta.tiredb56.api.extension.Extension;
-import beta.tiredb56.api.guis.clickgui.setting.NumberSetting;
+import beta.tiredb56.api.guis.clickgui.setting.impl.BooleanSetting;
 import beta.tiredb56.event.EventTarget;
+import beta.tiredb56.event.events.Render2DEvent;
 import beta.tiredb56.event.events.Render3DEvent2;
 import beta.tiredb56.module.Module;
 import beta.tiredb56.module.ModuleCategory;
+import beta.tiredb56.shader.list.ShaderESP;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.AxisAlignedBB;
@@ -22,15 +25,38 @@ import java.util.List;
 
 public class ESP extends Module {
 
-    private final NumberSetting thickness = new NumberSetting("Thickness", this, 1.5f, 1.5f, 5.0f, 0.25f);
+    private final BooleanSetting esp2D = new BooleanSetting("2DESP", this, true);
+    private final BooleanSetting shaderESP = new BooleanSetting("shaderESP", this, true);
+
+    private final ShaderESP shaderESPShader = new ShaderESP(5);
 
     public ESP() {
 
     }
 
     @EventTarget
+    public void onRender2D(Render2DEvent event) {
+        if (shaderESP.getValue()) {
+
+
+            shaderESPShader.render(event.getPartialTicks());
+            for (Entity e : MC.theWorld.loadedEntityList) {
+                if (e != MC.thePlayer) {
+                    if (Extension.EXTENSION.getGenerallyProcessor().renderProcessor.isInViewFrustrum(e)) {
+
+                        MC.getRenderManager().renderEntityStatic(e, event.getPartialTicks(), true);
+                    }
+                }
+            }
+            shaderESPShader.deleteShader(event.getPartialTicks());
+        }
+    }
+
+    @EventTarget
     public void onRender(Render3DEvent2 event) {
-        renderReal2D(event);
+        if (esp2D.getValue()) {
+            renderReal2D(event);
+        }
     }
 
     public final void renderReal2D(Render3DEvent2 event) {

@@ -2,6 +2,7 @@ package beta.tiredb56.shader.list;
 
 import beta.tiredb56.api.extension.Extension;
 import beta.tiredb56.interfaces.IHook;
+import beta.tiredb56.module.impl.list.visual.ClickGUI;
 import beta.tiredb56.shader.ShaderProgram;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -13,7 +14,9 @@ public class ShaderESP implements IHook {
 
     private final ShaderProgram blurShader = new ShaderProgram("fragment/glowesp.frag");
 
-    private Framebuffer entityOutlineFramebuffer;
+    private static Framebuffer blurBuffer = new Framebuffer(1, 1, false);
+
+    private final ShaderProgram kawaseUp = new ShaderProgram("fragment/blur.frag");
 
     private float radius;
 
@@ -22,13 +25,15 @@ public class ShaderESP implements IHook {
     }
 
     public void render(float partialTicks) {
-        GlStateManager.enableAlpha();
 
         GlStateManager.pushMatrix();
         GlStateManager.pushAttrib();
 
-
+        blurBuffer = Extension.EXTENSION.getGenerallyProcessor().renderProcessor.createFramebuffer(blurBuffer, true);
+        blurBuffer.framebufferClear();
+        blurBuffer.bindFramebuffer(true);
         MC.entityRenderer.setupCameraTransform(partialTicks, 0);
+
 
     }
 
@@ -40,46 +45,26 @@ public class ShaderESP implements IHook {
 
         mc.entityRenderer.disableLightmap();
         RenderHelper.disableStandardItemLighting();
+
+        blurShader.initShader();
+        setupUniforms(1, 0);
         mc.entityRenderer.setupOverlayRendering();
-
-
-
-
-        blurShader.renderTexture();
+        blurShader.renderFrameBufferOnly(blurBuffer);
         blurShader.deleteShader();
-
-
-
-
+        GlStateManager.disableBlend();
+        mc.entityRenderer.disableLightmap();
         GlStateManager.popMatrix();
         GlStateManager.popAttrib();
+        GlStateManager.disableDepth();
     }
-
-    private void renderShader(int x, int y, Framebuffer framebuffer) {
-        blurShader.initShader();
-        setupUniforms(x, y);
-        blurShader.renderFrameBufferOnly(framebuffer);
-
-
-    }
-
-    private void doShaderPass(final Framebuffer framebuffer) {
-        blurShader.initShader();
-        setupUniforms(1, 1);
-        blurShader.renderFrameBufferOnly(framebuffer);
-        blurShader.renderTexture();
-
-
-    }
-
 
     public void setupUniforms(float x, float y) {
         blurShader.setUniformi("currentTexture", 0);
-        blurShader.setUniformf("texelSize", (float) (1.0 / MC.displayWidth), (float) (1.0 / MC.displayHeight));
+        blurShader.setUniformf("texelSize", (float) (1.2 / MC.displayWidth), (float) (1.2 / MC.displayHeight));
         blurShader.setUniformf("coords", x, y);
-        blurShader.setUniformf("blurRadius", 5);
+        blurShader.setUniformf("blurRadius", 2);
         blurShader.setUniformf("blursigma", 6);
-        blurShader.setUniformf("u_color", 244, 1, 1);
+        blurShader.setUniformf("u_color", (float) (ClickGUI.getInstance().colorPickerSetting.ColorPickerC.getRed() / 255.0f), ClickGUI.getInstance().colorPickerSetting.ColorPickerC.getGreen() / 255.0f, ClickGUI.getInstance().colorPickerSetting.ColorPickerC.getBlue() / 255.0f);
     }
 
     public float radius() {
